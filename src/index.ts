@@ -1,4 +1,5 @@
 import express from 'express';
+require('dotenv').config();
 import axios from 'axios';
 import bodyParser from 'body-parser';
 import cors from 'cors';
@@ -34,6 +35,7 @@ app.use('/api/lobby/*', async (req, res) => {
     res.status(response.status).send(response.data);
   } catch (error: any) {
     console.error('Lobby API error:', error.message);
+    console.error('Response data:', error)
     const statusCode = error.response?.status || 500;
     res.status(statusCode).json({ error: error.message });
   }
