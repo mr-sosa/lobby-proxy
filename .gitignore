@@ -1,0 +1,58 @@
+gitignore
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Optional npm cache files
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Directory for compiled output
+/dist
+/build
+
+# Editor directories and files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# OS generated files
+.DS_Store
+.Trashes
+npm-debug.log*
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv files
+.env
+.env.*
+
+# Mac specific files
+.DS_Store
+
+# Windows specific files
+Thumbs.db
+
+# IDE specific files
+.vscode/
+.idea/
+
+# Local configuration files
+config.json
