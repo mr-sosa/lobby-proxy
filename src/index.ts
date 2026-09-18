@@ -19,7 +19,7 @@ app.get('/', (req: Request, res: Response) => {
 // SSE Transport for MCP over HTTP
 const transports = new Map<string, SSEServerTransport>();
 
-app.get('/sse', async (req: Request, res: Response) => {
+const handleSse = async (req: Request, res: Response) => {
   console.log('New SSE connection for MCP');
   const transport = new SSEServerTransport('/messages', res);
   transports.set(transport.sessionId, transport);
@@ -31,7 +31,10 @@ app.get('/sse', async (req: Request, res: Response) => {
 
   const mcpServer = createMcpServer();
   await mcpServer.connect(transport);
-});
+};
+
+app.get('/sse', handleSse);
+app.get('/mcp', handleSse);
 
 app.post('/messages', async (req: Request, res: Response) => {
   const sessionId = req.query.sessionId as string;
