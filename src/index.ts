@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 require('dotenv').config();
 import axios from 'axios';
 import bodyParser from 'body-parser';
@@ -9,7 +9,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors()); // Or configure CORS more specifically
 
-app.get('/', (req, res) => {
+app.get('/', (req: Request, res: Response) => {
   const name = process.env.NAME || 'World';
   res.send(`Hello ${name}!`);
 });
@@ -17,7 +17,7 @@ app.get('/', (req, res) => {
 const LOBBY_BASE_URL = process.env.LOBBY_BASE_URL;
 const LOBBY_API_KEY = process.env.LOBBY_API_KEY;
 
-app.use('/api/lobby/*', async (req, res) => {
+app.use('/api/lobby/*', async (req: Request, res: Response) => {
   const lobbyPath = req.params[0];
   const targetUrl = `${LOBBY_BASE_URL}/${lobbyPath}`;
 
