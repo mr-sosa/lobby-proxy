@@ -4,6 +4,7 @@ import axios from 'axios';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { createMcpServer } from './mcp-server';
 
 const app = express();
@@ -16,29 +17,50 @@ app.get('/', (req: Request, res: Response) => {
   res.send(`Hello ${name}! LobbyPMS MCP & Proxy Server Running.`);
 });
 
-// SSE Transport for MCP over HTTP
-const transports = new Map<string, SSEServerTransport>();
+// Map for legacy SSE session transport
+const sseTransports = new Map<string, SSEServerTransport>();
 
-const handleSse = async (req: Request, res: Response) => {
+// Streamable HTTP endpoint (New Claude HTTP Transmisible Transport)
+app.all(['/mcp', '/mcp/*'], async (req: Request, res: Response) => {
+  try {
+    const mcpServer = createMcpServer();
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+    });
+    await mcpServer.connect(transport);
+    await transport.handleRequest(req, res, req.body);
+  } catch (error: any) {
+    console.error('Streamable HTTP Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Legacy SSE endpoints (Handles /sse & /messages)
+app.get('/sse', async (req: Request, res: Response) => {
+  // If client requests JSON or Streamable HTTP on /sse endpoint, forward to StreamableHTTPServerTransport
+  if (req.headers.accept?.includes('application/json') || req.method === 'POST') {
+    const mcpServer = createMcpServer();
+    const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+    await mcpServer.connect(transport);
+    return await transport.handleRequest(req, res, req.body);
+  }
+
   console.log('New SSE connection for MCP');
   const transport = new SSEServerTransport('/messages', res);
-  transports.set(transport.sessionId, transport);
+  sseTransports.set(transport.sessionId, transport);
 
   transport.onclose = () => {
     console.log(`SSE session closed: ${transport.sessionId}`);
-    transports.delete(transport.sessionId);
+    sseTransports.delete(transport.sessionId);
   };
 
   const mcpServer = createMcpServer();
   await mcpServer.connect(transport);
-};
-
-app.get('/sse', handleSse);
-app.get('/mcp', handleSse);
+});
 
 app.post('/messages', async (req: Request, res: Response) => {
   const sessionId = req.query.sessionId as string;
-  const transport = transports.get(sessionId);
+  const transport = sseTransports.get(sessionId);
   if (transport) {
     await transport.handlePostMessage(req, res);
   } else {
@@ -46,7 +68,7 @@ app.post('/messages', async (req: Request, res: Response) => {
   }
 });
 
-// Existing proxy endpoint
+// Existing REST proxy endpoint
 const LOBBY_BASE_URL = process.env.LOBBY_BASE_URL;
 const LOBBY_API_KEY = process.env.LOBBY_API_KEY;
 
